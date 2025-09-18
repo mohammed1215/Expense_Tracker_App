@@ -116,3 +116,8 @@ All expense-related endpoints are protected and require a `Bearer` token in the 
 | `POST`   | `/api/expenses`         | Create a new expense for the logged-in user.                              | `{ "title": "...", "amount": 50, "category": "GROCERIES", "type": "EXPENSE" }` |
 | `PATCH`  | `/api/expenses/:id`     | Update an existing expense by its ID.                                     | `{ "amount": 55, "description": "Updated amount" }`                      |
 | `DELETE` | `/api/expenses/:id`     | Delete an expense by its ID.                                              | N/A                                                                      |
+
+
+### URL
+
+https://roadmap.sh/projects/expense-tracker-api
