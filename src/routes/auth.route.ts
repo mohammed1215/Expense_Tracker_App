@@ -1,22 +1,18 @@
 import { Router, type NextFunction, type Request, type Response } from "express"
 import { z } from "zod"
 import validator from "validator"
-import jwt from "jsonwebtoken"
 import { PrismaClient } from "../../generated/prisma/index.js"
 import { createToken } from "../utils.js"
+import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
+
 //datatypes
 type registerBody = {
   username: string,
   email: string,
   password: string,
   confirmPassword: string
-}
-
-type ENV = {
-  DATABASE_URL: string,
-  SECRET_JWT_KEY: string,
 }
 
 const strongPasswordSchema = z.string({ error: "Not A String" }).min(8, "Must be at least 8 letters").refine(val => validator.isStrongPassword(val, { minLength: 8 }), { error: "Not Strong Password" })
@@ -58,8 +54,10 @@ authRouter.post('/register', async (req: Request<{}, {}, registerBody>, res: Res
       return res.status(409).json({ status: 'fail', msg: "email already exists" })
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     //create user
-    const newUser = await prisma.user.create({ data: { email, password, username } })
+    const newUser = await prisma.user.create({ data: { email, password: hashedPassword, username } })
 
     //jsonwebtoken
     const { accessToken, refreshToken } = createToken({ userId: newUser.id })
@@ -76,17 +74,20 @@ authRouter.post('/register', async (req: Request<{}, {}, registerBody>, res: Res
 authRouter.post('/login', async (req: Request<{}, {}, Omit<registerBody, "username" | "confirmPassword">>, res: Response, next: NextFunction) => {
   const { email, password } = req.body
 
-  const result = loginSchema.safeParse({ email, password })
-  if (!result.success) {
-    const errors = z.flattenError(result.error).fieldErrors
-    return res.status(400).json({ status: "fail", errors })
-  }
+
+
+
   // check if user exists or not
   const user = await prisma.user.findFirst({ where: { email } })
   if (!user) {
     return res.status(404).json({ status: 'fail', msg: "email Not Found" })
   }
 
+  const result = await bcrypt.compare(password, user.password)
+
+  if (!result) {
+    return res.status(401).json({ status: 'fail', msg: "password is incorrect" })
+  }
   //jsonwebtoken
   const { accessToken, refreshToken } = createToken({ userId: user.id })
 
@@ -94,8 +95,6 @@ authRouter.post('/login', async (req: Request<{}, {}, Omit<registerBody, "userna
   res.cookie("refreshToken", refreshToken, { maxAge: 5 * 24 * 60 * 60 * 1000, secure: true, sameSite: true, httpOnly: true })
 
   return res.json({ status: 'success', msg: "user has logged in successfully", accessToken })
-
-
 })
 
 

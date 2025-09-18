@@ -1,0 +1,34 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[Expense] (
+    [id] NVARCHAR(1000) NOT NULL,
+    [date] DATETIME2 NOT NULL CONSTRAINT [Expense_date_df] DEFAULT CURRENT_TIMESTAMP,
+    [title] NVARCHAR(1000) NOT NULL,
+    [category] NVARCHAR(1000) NOT NULL,
+    [amount] FLOAT(53) NOT NULL,
+    [type] NVARCHAR(1000) NOT NULL,
+    [description] NVARCHAR(1000),
+    [currency] NVARCHAR(1000),
+    [vendor] NVARCHAR(1000),
+    [userId] NVARCHAR(1000) NOT NULL,
+    CONSTRAINT [Expense_pkey] PRIMARY KEY CLUSTERED ([id])
+);
+
+-- AddForeignKey
+ALTER TABLE [dbo].[Expense] ADD CONSTRAINT [Expense_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

@@ -38,7 +38,7 @@ function isAuth(req: Request, res: Response, next: NextFunction) {
       return res.status(401).json({ status: 'fail', msg: 'Invalid token payload' });
     }
     req.userId = result.userId
-
+    next()
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ status: 'fail', msg: "invalid token" })
@@ -51,5 +51,6 @@ function isAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 
-export { createToken }
+
+export { createToken, isAuth }
 
